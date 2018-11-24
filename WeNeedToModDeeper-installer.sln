@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2046
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeNeedToModDeeper-installer", "WeNeedToModDeeper-installer\WeNeedToModDeeper-installer.csproj", "{A64DE960-9D49-42E3-9420-C4DAF5445D9B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A64DE960-9D49-42E3-9420-C4DAF5445D9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A64DE960-9D49-42E3-9420-C4DAF5445D9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A64DE960-9D49-42E3-9420-C4DAF5445D9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A64DE960-9D49-42E3-9420-C4DAF5445D9B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D73A0956-F55B-4A89-AB67-D8A4C9016C0F}
+	EndGlobalSection
+EndGlobal
