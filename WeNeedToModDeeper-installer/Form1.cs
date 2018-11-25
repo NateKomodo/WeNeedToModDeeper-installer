@@ -88,7 +88,7 @@ namespace WeNeedToModDeeper_installer
                 var quote = "\"";
                 var exe = @"C:\Program Files (x86)\Microsoft\ILMerge\ILMerge.exe";
                 var args = "/ndebug /copyattrs /targetplatform:4.0," + quote + @"C:\Windows\Microsoft.NET\Framework64\v4.0.30319" + quote;
-                var outfile = "/out:" + quote + @"C:\Users\natko\Desktop\merge.dll" + quote;
+                var outfile = "/out:" + quote + Application.StartupPath + @"\merge.dll" + quote;
                 var asm2 = quote + Path.Combine(Application.StartupPath, "ModEngine.dll") + quote;
                 var asm1 = quote + Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll") + quote;
                 var command = args + " " + outfile + " " + asm1 + " " + asm2;
