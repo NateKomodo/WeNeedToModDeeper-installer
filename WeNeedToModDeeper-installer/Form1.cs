@@ -4,6 +4,8 @@ using System.IO;
 using System.Net;
 using System.Windows.Forms;
 using System.IO.Compression;
+using System.Threading;
+using dnlib.DotNet;
 
 namespace WeNeedToModDeeper_installer
 {
@@ -81,27 +83,22 @@ namespace WeNeedToModDeeper_installer
 
         private void DoInstall(string path)
         {
-            DownloadIPA(path);
-            string args = Path.Combine(path, "IPA.exe");
-            args = "/c " + "\"" + args + "\" WeNeedToGoDeeper.exe";
-            Process.Start("cmd.exe", args);
-            File.Copy("ModEngine.exe", Path.Combine(path, "Plugins"));
-            MessageBox.Show("Install complete! You will need to start the game, then you should see a new folder called \"mods\" in your we need to go deeper directory");
-        }
-        private void DownloadIPA(string path)
-        {
-            using (var client = new WebClient())
+            if (File.Exists(@"C:\Program Files (x86)\Microsoft\ILMerge\ILMerge.exe"))
             {
-                client.DownloadFile("https://github.com/Eusth/IPA/releases/download/3.4.1/IPA_3.4.1.zip", "ipa.zip");
+                var quote = "\"";
+                var exe = @"C:\Program Files (x86)\Microsoft\ILMerge\ILMerge.exe";
+                var args = "/ndebug /copyattrs /targetplatform:4.0," + quote + @"C:\Windows\Microsoft.NET\Framework64\v4.0.30319" + quote;
+                var outfile = "/out:" + quote + @"C:\Users\natko\Desktop\merge.dll" + quote;
+                var asm2 = quote + Path.Combine(Application.StartupPath, "ModEngine.dll") + quote;
+                var asm1 = quote + Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll") + quote;
+                var command = args + " " + outfile + " " + asm1 + " " + asm2;
+                Process.Start(exe, command);
             }
-            using (ZipArchive archive = ZipFile.OpenRead("ipa.zip"))
+            else
             {
-                foreach (ZipArchiveEntry entry in archive.Entries)
-                {
-                    entry.ExtractToFile(path);
-                }
+                MessageBox.Show("Please install ILMerge!");
+                Process.Start("https://www.microsoft.com/en-us/download/confirmation.aspx?id=17630");
             }
-            File.Delete("ipa.zip");
         }
     }
 }
