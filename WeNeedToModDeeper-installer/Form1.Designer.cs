@@ -63,7 +63,7 @@ namespace WeNeedToModDeeper_installer
             // locationDialog
             // 
             this.locationDialog.RootFolder = System.Environment.SpecialFolder.MyComputer;
-            this.locationDialog.HelpRequest += new System.EventHandler(this.locationDialog_HelpRequest);
+            this.locationDialog.HelpRequest += new System.EventHandler(this.ocationDialog_HelpRequest);
             // 
             // textBox1
             // 
@@ -91,6 +91,11 @@ namespace WeNeedToModDeeper_installer
             this.ResumeLayout(false);
             this.PerformLayout();
 
+        }
+
+        private void ocationDialog_HelpRequest(object sender, EventArgs e)
+        {
+            throw new NotImplementedException();
         }
 
         private void folderBrowserDialog1_HelpRequest(object sender, EventArgs e)
