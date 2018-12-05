@@ -2,10 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Forms;
-using System.Threading;
-using Mono.Cecil;
-using System.Linq;
-using Mono.Cecil.Cil;
+using System.Net;
+using System.IO.Compression;
 
 namespace WeNeedToModDeeper_installer
 {
@@ -71,7 +69,7 @@ namespace WeNeedToModDeeper_installer
                     }
                 }
             }
-            if (!File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll"))) { MessageBox.Show("Directory is invalid"); enableButtons(); return; } //Check path is valid
+            if (!File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\UnityEngine.CoreModule.dll"))) { MessageBox.Show("Directory is invalid"); enableButtons(); return; } //Check path is valid
             if (sender == button3) { Uninstall(path); return; } //If uninstall button was pressed, goto uninstall
             if (File.Exists("ModEngine.dll")) //Check ModEngine is present
             {
@@ -102,11 +100,10 @@ namespace WeNeedToModDeeper_installer
         private void Uninstall(string path)
         {
             //Check for a backup of the game code
-            if (File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp-backup.dll")))
+            if (File.Exists(Path.Combine(path, @"IPA.exe")))
             {
-                File.Delete(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll")); //Delete patched game code
-                File.Copy(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp-backup.dll"), Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll")); //Copy backup to game code
-                File.Delete(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp-backup.dll")); //Delete backup
+                string quote = "\"";
+                Process.Start(Path.Combine(path, "IPA.exe"), quote + Path.Combine(path, "WeNeedToGoDeeper.exe") + quote + " --revert");
                 //Inform user and reenable app
                 MessageBox.Show("Uninstall complete");
                 enableButtons();
@@ -121,99 +118,35 @@ namespace WeNeedToModDeeper_installer
 
         private void DoInstall(string path)
         {
-            //Check ILMerge is installed
-            if (File.Exists(@"C:\Program Files (x86)\Microsoft\ILMerge\ILMerge.exe"))
-            {
-                ContinueInstall2(path);
-            }
-            else
-            {
-                //Ask user to install ILMerge
-                MessageBox.Show("Please install ILMerge!");
-                Process.Start("https://www.microsoft.com/en-us/download/confirmation.aspx?id=17630");
-            }
-        }
-
-        private void ContinueInstall2(string path)
-        {
-            AddModDll(path);
-            if (File.Exists("Assembly-CSharp.dll")) File.Delete("Assembly-CSharp.dll");
-            File.Copy(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll"), "Assembly-CSharp.dll");
-            AddRef(path);
-            ReWriteMerge();
-            if (!File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp-backup.dll"))) File.Copy(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll"), Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp-backup.dll")); //Backup the game code if it isnt already
-            File.Delete(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll")); //Delete the unpatched game code
-            File.Copy(Path.Combine(Application.StartupPath, "Assembly-CSharp-patched.dll"), Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll")); //Write the patched
-            //Cleanup
-            File.Delete("Assembly-CSharp.dll");
-            File.Delete("Assembly-CSharp-patched.dll");
-            //Inform user and reenable buttons
-            MessageBox.Show("Installation complete");
-            enableButtons();
-        }
-
-        private void AddModDll(string path)
-        {
-            if (File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"))) File.Delete(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"));
-            File.Copy("ModEngine.dll", Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"));
-        }
-
-        private void AddRef(string path)
-        {
-            var _Module = ModuleDefinition.ReadModule(Path.Combine(Application.StartupPath, @"Assembly-CSharp.dll"));
-            var nameReference = new AssemblyNameReference("ModEngine", new Version(1, 0, 0, 0));
-            _Module.AssemblyReferences.Add(nameReference);
+            ContinueInstall(path);
         }
 
         private void ContinueInstall(string path)
         {
-            if (File.Exists("Assembly -CSharp.dll")) File.Delete("Assembly-CSharp.dll"); //If a merged file is present for whatever reason delete it
-            if (reinstall) { DoMerge(path, "Assembly-CSharp-backup.dll"); } else { DoMerge(path, "Assembly-CSharp.dll"); } //Perform DLL merge, using either the backup or main game code
-            Thread.Sleep(5000); //Wait for merge to complete
-            if (!File.Exists("Assembly-CSharp.dll")) { MessageBox.Show("Either something went wrong or the engine is already installed, as ILMerge timeout has been exceeded and rewritten file was not found!"); enableButtons(); return; } //If it hasnt then prompt the user
-            ReWriteMerge(); //Rewrite the merged file
-            if (!File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp-backup.dll"))) File.Copy(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll"), Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp-backup.dll")); //Backup the game code if it isnt already
-            File.Delete(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll")); //Delete the unpatched game code
-            File.Copy(Path.Combine(Application.StartupPath, "Assembly-CSharp-patched.dll"), Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\Assembly-CSharp.dll")); //Write the patched
-            //Cleanup
-            File.Delete("Assembly-CSharp.dll");
-            File.Delete("Assembly-CSharp-patched.dll");
-            //Inform user and reenable buttons
-            MessageBox.Show("Installation complete");
+            AddModDll(path); //Add the dll to the game data folder
+            GetIPA(path); //Get the modded IPA
+            string quote = "\"";
+            Process.Start(Path.Combine(path, "IPA.exe"), quote + Path.Combine(path, "WeNeedToGoDeeper.exe") + quote);
+            MessageBox.Show("Install complete");
             enableButtons();
         }
 
-        private void DoMerge(string path, string file)
+        private void GetIPA(string path)
         {
-            //Assemble the command to merge the assemblies
-            var quote = "\"";
-            var exe = @"C:\Program Files (x86)\Microsoft\ILMerge\ILMerge.exe";
-            var args = "/ndebug /copyattrs /targetplatform:4.0," + quote + @"C:\Windows\Microsoft.NET\Framework64\v4.0.30319" + quote;
-            var outfile = "/out:" + quote + Application.StartupPath + @"\Assembly-CSharp.dll" + quote;
-            var asm2 = quote + Path.Combine(Application.StartupPath, "ModEngine.dll") + quote;
-            var asm1 = quote + Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\" + file) + quote;
-            var command = args + " " + outfile + " " + asm1 + " " + asm2;
-            //Run it
-            Process.Start(exe, command);
-        }
-
-        private void ReWriteMerge() //TODO also write message handler
-        {
-            var path = Path.Combine(Application.StartupPath, "Assembly-CSharp.dll"); //Get path to asm
-            var assembly = AssemblyDefinition.ReadAssembly(path); //Load asm
-            //Get types that match criteria
-            var toInspect = assembly.MainModule.GetTypes().SelectMany(t => t.Methods.Select(m => new { t, m })).Where(x => x.m.HasBody);
-            toInspect = toInspect.Where(x => x.t.Name.EndsWith("MainMenuManagerBehavior") && x.m.Name == "Wiki");
-            foreach (var method in toInspect) //Get the type
+            using (var client = new WebClient())
             {
-                var processor = method.m.Body.GetILProcessor(); //Get IL processor
-                var call = processor.Create(OpCodes.Call, method.m.Module.Import(typeof(WeNeedToModDeeperEngine.ModEngine).GetMethod("Main"))); //Create a call opcode to the engine
-                var lastInstruction = method.m.Body.Instructions[method.m.Body.Instructions.Count - 1]; //Get the last command
-
-                processor.InsertBefore(lastInstruction, call); //Write the call before the first command
-                
+                client.DownloadFile("https://github.com/NateKomodo/Modded-IPA/releases/download/v1/ipa.zip", "ipa.zip");
             }
-            assembly.Write("Assembly-CSharp-patched.dll"); //Write the assembly
+            if (!File.Exists(Path.Combine(path, "IPA.exe")))
+            {
+                ZipFile.ExtractToDirectory("ipa.zip", path);
+            }
+        }
+        private void AddModDll(string path)
+        {
+            //Copies the ModEngine dll to the game data folder
+            if (File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"))) File.Delete(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"));
+            File.Copy("ModEngine.dll", Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"));
         }
     }
 }
