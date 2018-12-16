@@ -7,7 +7,7 @@ using System.IO.Compression;
 
 namespace WeNeedToModDeeper_installer
 {
-    public partial class Form1 : Form
+    public partial class Installer : Form
     {
         //Common paths to game install
         const string path1 = @"E:\Program Files (x86)\Steam\steamapps\common\WeNeedtoGoDeeper";
@@ -16,10 +16,8 @@ namespace WeNeedToModDeeper_installer
         const string path4 = @"E:\Program Files\Steam\steamapps\common\WeNeedtoGoDeeper";
         const string path5 = @"C:\Program Files\Steam\steamapps\common\WeNeedtoGoDeeper";
         const string path6 = @"D:\Program Files\Steam\steamapps\common\WeNeedtoGoDeeper";
-        //Check to see if the mod engine is being updated so we dont double-patch
-        bool reinstall = false;
 
-        public Form1() //Entry point, init form
+        public Installer() //Entry point, init form
         {
             InitializeComponent();
 
@@ -71,6 +69,7 @@ namespace WeNeedToModDeeper_installer
             }
             if (!File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\UnityEngine.CoreModule.dll"))) { MessageBox.Show("Directory is invalid"); enableButtons(); return; } //Check path is valid
             if (sender == button3) { Uninstall(path); return; } //If uninstall button was pressed, goto uninstall
+            if (sender == button2) { OpenModManager(path); return; }
             if (File.Exists("ModEngine.dll")) //Check ModEngine is present
             {
                 DoInstall(path); //Install
@@ -103,7 +102,7 @@ namespace WeNeedToModDeeper_installer
             if (File.Exists(Path.Combine(path, @"IPA.exe")))
             {
                 string quote = "\"";
-                Process.Start(Path.Combine(path, "IPA.exe"), quote + Path.Combine(path, "WeNeedToGoDeeper.exe") + quote + " --revert");
+                Process.Start(Path.Combine(path, "IPA.exe"), quote + Path.Combine(path, "WeNeedToGoDeeper.exe") + quote + " --revert --nowait");
                 //Inform user and reenable app
                 MessageBox.Show("Uninstall complete");
                 enableButtons();
@@ -118,7 +117,14 @@ namespace WeNeedToModDeeper_installer
 
         private void DoInstall(string path)
         {
-            ContinueInstall(path);
+            try
+            {
+                ContinueInstall(path);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
         }
 
         private void ContinueInstall(string path)
@@ -126,8 +132,9 @@ namespace WeNeedToModDeeper_installer
             AddModDll(path); //Add the dll to the game data folder
             GetIPA(path); //Get the modded IPA
             string quote = "\"";
-            Process.Start(Path.Combine(path, "IPA.exe"), quote + Path.Combine(path, "WeNeedToGoDeeper.exe") + quote);
-            MessageBox.Show("Install complete");
+            Process.Start(Path.Combine(path, "IPA.exe"), quote + Path.Combine(path, "WeNeedToGoDeeper.exe") + quote + " --nowait");
+            MessageBox.Show("Install complete, to install mods, download them (They should be a dll) and put them in the plugins folder at: " + Path.Combine(path, "Plugins"));
+            File.Delete("ipa.zip");
             enableButtons();
         }
 
@@ -147,6 +154,12 @@ namespace WeNeedToModDeeper_installer
             //Copies the ModEngine dll to the game data folder
             if (File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"))) File.Delete(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"));
             File.Copy("ModEngine.dll", Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"));
+        }
+        private void OpenModManager(string path)
+        {
+            enableButtons();
+            ModManager manager = new ModManager(path);
+            manager.Show();
         }
     }
 }
