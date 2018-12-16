@@ -97,6 +97,7 @@ namespace WeNeedToModDeeper_installer
             if (listBox1.SelectedItem == null)
             {
                 MessageBox.Show("Please select an item");
+                return;
             }
             string selected = listBox1.SelectedItem.ToString();
             try
@@ -118,6 +119,7 @@ namespace WeNeedToModDeeper_installer
             if (listBox1.SelectedItem == null)
             {
                 MessageBox.Show("Please select an item");
+                return;
             }
             string selected = listBox1.SelectedItem.ToString();
             MessageBox.Show(selected + ": "
