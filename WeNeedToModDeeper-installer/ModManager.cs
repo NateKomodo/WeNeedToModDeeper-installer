@@ -96,7 +96,7 @@ namespace WeNeedToModDeeper_installer
             }
             if (listBox1.SelectedItem == null)
             {
-                MessageBox.Show("Please select and item");
+                MessageBox.Show("Please select an item");
             }
             string selected = listBox1.SelectedItem.ToString();
             try
@@ -117,7 +117,7 @@ namespace WeNeedToModDeeper_installer
         {
             if (listBox1.SelectedItem == null)
             {
-                MessageBox.Show("Please select and item");
+                MessageBox.Show("Please select an item");
             }
             string selected = listBox1.SelectedItem.ToString();
             MessageBox.Show(selected + ": "
