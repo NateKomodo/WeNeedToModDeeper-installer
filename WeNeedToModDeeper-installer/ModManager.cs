@@ -131,19 +131,27 @@ namespace WeNeedToModDeeper_installer
 
         private void GetList()
         {
-            WebClient client = new WebClient();
-            Stream stream = client.OpenRead("https://raw.githubusercontent.com/NateKomodo/WeNeedToModDeeper-Plugins/master/index.txt");
-            StreamReader reader = new StreamReader(stream);
-            string content = reader.ReadToEnd();
-            string[] lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-            foreach (var line in lines)
+            try
             {
-                string[] entry = line.Split('&');
-                if (entry[0].StartsWith("#")) continue;
-                listBox1.Items.Add(entry[0]);
-                namedesc.Add(entry[0], entry[1]);
-                namedownload.Add(entry[0], entry[2]);
-                nameprefix.Add(entry[0], entry[3]);
+                WebClient client = new WebClient();
+                Stream stream = client.OpenRead("https://raw.githubusercontent.com/NateKomodo/WeNeedToModDeeper-Plugins/master/index.txt");
+                StreamReader reader = new StreamReader(stream);
+                string content = reader.ReadToEnd();
+                string[] lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                foreach (var line in lines)
+                {
+                    string[] entry = line.Split('&');
+                    if (entry[0].StartsWith("#")) continue;
+                    listBox1.Items.Add(entry[0]);
+                    namedesc.Add(entry[0], entry[1]);
+                    namedownload.Add(entry[0], entry[2]);
+                    nameprefix.Add(entry[0], entry[3]);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+                this.Close();
             }
         }
     }
