@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows.Forms;
 using System.Net;
 using System.IO.Compression;
+using System.Reflection;
 
 namespace WeNeedToModDeeper_installer
 {
@@ -17,10 +18,42 @@ namespace WeNeedToModDeeper_installer
         const string path5 = @"C:\Program Files\Steam\steamapps\common\WeNeedtoGoDeeper";
         const string path6 = @"D:\Program Files\Steam\steamapps\common\WeNeedtoGoDeeper";
 
+        const string version = "2.1";
+
         public Installer() //Entry point, init form
         {
             InitializeComponent();
+            CheckForUpdates();
+        }
 
+        private void CheckForUpdates()
+        {
+            try
+            {
+                WebClient client = new WebClient();
+                Stream stream = client.OpenRead("https://raw.githubusercontent.com/NateKomodo/WeNeedToModDeeper-Plugins/master/installer-version.txt");
+                StreamReader reader = new StreamReader(stream);
+                string content = reader.ReadToEnd();
+                string[] lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("#")) continue;
+                    string ver = line.Trim();
+                    if (ver != version)
+                    {
+                        MessageBox.Show("Installer is out of date, please update it. The download page will now open");
+                        Process.Start("https://github.com/NateKomodo/WeNeedToModDeeper-installer/releases/latest");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message
+                    + Environment.NewLine
+                    + ex.StackTrace
+                    + Environment.NewLine
+                    + ex.InnerException);
+            }
         }
 
         private void button1_Click(object sender, EventArgs e) //When a button is clicked
@@ -123,7 +156,11 @@ namespace WeNeedToModDeeper_installer
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
+                MessageBox.Show("Error: " + ex.Message
+                    + Environment.NewLine
+                    + ex.StackTrace
+                    + Environment.NewLine
+                    + ex.InnerException);
             }
         }
 

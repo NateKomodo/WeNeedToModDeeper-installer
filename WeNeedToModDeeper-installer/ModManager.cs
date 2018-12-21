@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Windows.Forms;
@@ -11,14 +12,26 @@ namespace WeNeedToModDeeper_installer
         Dictionary<string, string> namedesc = new Dictionary<string, string>();
         Dictionary<string, string> namedownload = new Dictionary<string, string>();
         Dictionary<string, string> nameprefix = new Dictionary<string, string>();
+        Dictionary<string, string> nameauthor = new Dictionary<string, string>();
         private Button button3;
         string pluginspath;
 
         public ModManager(string path)
         {
-            pluginspath = Path.Combine(path, "Plugins");
-            InitializeComponent();
-            GetList();
+            try
+            {
+                pluginspath = Path.Combine(path, "Plugins");
+                InitializeComponent();
+                GetList();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("MM Error: " + ex.Message
+                    + Environment.NewLine
+                    + ex.StackTrace
+                    + Environment.NewLine
+                    + ex.InnerException);
+            }
         }
         private ListBox listBox1;
         private Button button1;
@@ -139,6 +152,8 @@ namespace WeNeedToModDeeper_installer
                 + Environment.NewLine
                 + "Description: " + namedesc[selected]
                 + Environment.NewLine
+                + "Author: " + nameauthor[selected]
+                + Environment.NewLine
                 + "Command Prefix: " + nameprefix[selected]);
         }
 
@@ -153,18 +168,23 @@ namespace WeNeedToModDeeper_installer
                 string[] lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
                 foreach (var line in lines)
                 {
+                    if (line == " " || line == "" || line == null) continue;
                     string[] entry = line.Split('&');
                     if (entry[0].StartsWith("#")) continue;
                     listBox1.Items.Add(entry[0]);
                     namedesc.Add(entry[0], entry[1]);
                     namedownload.Add(entry[0], entry[2]);
                     nameprefix.Add(entry[0], entry[3]);
+                    nameauthor.Add(entry[0], entry[4]);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error: " + ex.Message);
-                this.Close();
+                MessageBox.Show("Error: " + ex.Message
+                    + Environment.NewLine
+                    + ex.StackTrace
+                    + Environment.NewLine
+                    + ex.Data);
             }
         }
 
