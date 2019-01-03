@@ -18,49 +18,17 @@ namespace WeNeedToModDeeper_installer
         const string path5 = @"C:\Program Files\Steam\steamapps\common\WeNeedtoGoDeeper";
         const string path6 = @"D:\Program Files\Steam\steamapps\common\WeNeedtoGoDeeper";
 
-        const string version = "2.1";
+        const string version = "2.2";
+
+        string path;
 
         public Installer() //Entry point, init form
         {
+            Debug.WriteLine("Installer started, version " + version);
+            Debug.WriteLine("Init form");
             InitializeComponent();
             CheckForUpdates();
-        }
-
-        private void CheckForUpdates()
-        {
-            try
-            {
-                WebClient client = new WebClient();
-                Stream stream = client.OpenRead("https://raw.githubusercontent.com/NateKomodo/WeNeedToModDeeper-Plugins/master/installer-version.txt");
-                StreamReader reader = new StreamReader(stream);
-                string content = reader.ReadToEnd();
-                string[] lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
-                foreach (var line in lines)
-                {
-                    if (line.StartsWith("#")) continue;
-                    string ver = line.Trim();
-                    if (ver != version)
-                    {
-                        MessageBox.Show("Installer is out of date, please update it. The download page will now open");
-                        Process.Start("https://github.com/NateKomodo/WeNeedToModDeeper-installer/releases/latest");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message
-                    + Environment.NewLine
-                    + ex.StackTrace
-                    + Environment.NewLine
-                    + ex.InnerException);
-            }
-        }
-
-        private void button1_Click(object sender, EventArgs e) //When a button is clicked
-        {
-            disableButtons(); //Dont want them to click it too many times
-            string path = "";
-            //Check directory
+            Debug.WriteLine("Detecting paths");
             if (Directory.Exists(path1))
             {
                 path = path1;
@@ -88,6 +56,7 @@ namespace WeNeedToModDeeper_installer
             else
             {
                 //If it cant find it, it will ask to browse to it
+                Debug.WriteLine("Could not find path, idalog box open");
                 MessageBox.Show(@"Could not detect installation folder, you will now be prompted to choose the folder (Should be steamapps\common\WeNeedToGoDeeper)");
                 using (var fbd = new FolderBrowserDialog()) //Simple file dialog
                 {
@@ -97,21 +66,65 @@ namespace WeNeedToModDeeper_installer
                     if (result == DialogResult.OK && !string.IsNullOrWhiteSpace(fbd.SelectedPath))
                     {
                         path = fbd.SelectedPath;
+                        Debug.WriteLine("Dialog closed with: " + fbd.SelectedPath);
                     }
                 }
             }
-            if (!File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\UnityEngine.CoreModule.dll"))) { MessageBox.Show("Directory is invalid"); enableButtons(); return; } //Check path is valid
-            if (sender == button3) { Uninstall(path); return; } //If uninstall button was pressed, goto uninstall
-            if (sender == button2) { OpenModManager(path); return; }
+        }
+
+        private void CheckForUpdates()
+        {
+            try
+            {
+                Debug.WriteLine("Checking for update");
+                WebClient client = new WebClient();
+                Stream stream = client.OpenRead("https://raw.githubusercontent.com/NateKomodo/WeNeedToModDeeper-Plugins/master/installer-version.txt");
+                StreamReader reader = new StreamReader(stream);
+                string content = reader.ReadToEnd();
+                string[] lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("#")) continue;
+                    string ver = line.Trim();
+                    Debug.WriteLine("Latest is " + ver);
+                    if (ver != version)
+                    {
+                        Debug.WriteLine("Update required, prompting user");
+                        MessageBox.Show("Installer is out of date, please update it. The download page will now open");
+                        Process.Start("https://github.com/NateKomodo/WeNeedToModDeeper-installer/releases/latest");
+                        return;
+                    }
+                    Debug.WriteLine("Installer is up to date");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message
+                    + Environment.NewLine
+                    + ex.InnerException);
+                Debug.WriteLine("Error: " + ex.Message
+                    + Environment.NewLine
+                    + ex.InnerException);
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e) //When a button is clicked
+        {
+            disableButtons(); //Dont want them to click it too many times
+            Debug.WriteLine("Final path is: " + path);
+            if (!File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\UnityEngine.CoreModule.dll"))) { MessageBox.Show("Directory is invalid"); enableButtons(); Debug.WriteLine("Directory invalid"); return; } //Check path is valid
+            if (sender == button3) { Uninstall(); return; } //If uninstall button was pressed, goto uninstall
+            if (sender == button2) { OpenModManager(); return; }
             if (File.Exists("ModEngine.dll")) //Check ModEngine is present
             {
-                DoInstall(path); //Install
+                DoInstall(); //Install
             }
             else
             {
                 //Inform user and prompt download
                 MessageBox.Show("You do not appear to have ModEngine.dll downloaded and placed in the same folder as the installer, in case you did not download it, the download page will now open");
                 Process.Start("https://github.com/NateKomodo/WeNeedToModDeeper-Engine/releases/latest");
+                Debug.WriteLine("ModEngine.dll not present");
             }
         }
 
@@ -120,6 +133,7 @@ namespace WeNeedToModDeeper_installer
             //Set all buttons to disabled
             button1.Enabled = false;
             button3.Enabled = false;
+            Debug.WriteLine("Buttons disabled");
         }
 
         private void enableButtons()
@@ -127,15 +141,18 @@ namespace WeNeedToModDeeper_installer
             //Set all buttons to enabled
             button1.Enabled = true;
             button3.Enabled = true;
+            Debug.WriteLine("Buttons enabled");
         }
 
-        private void Uninstall(string path)
+        private void Uninstall()
         {
             //Check for a backup of the game code
             if (File.Exists(Path.Combine(path, @"IPA.exe")))
             {
+                Debug.WriteLine("IPA found, running unistall");
                 string quote = "\"";
                 Process.Start(Path.Combine(path, "IPA.exe"), quote + Path.Combine(path, "WeNeedToGoDeeper.exe") + quote + " --revert --nowait");
+                Debug.WriteLine("Uninstall complete");
                 //Inform user and reenable app
                 MessageBox.Show("Uninstall complete");
                 enableButtons();
@@ -143,57 +160,74 @@ namespace WeNeedToModDeeper_installer
             else
             {
                 //Backup not found, use steam instead
+                Debug.WriteLine("Did not find IPA");
                 MessageBox.Show("Could not find a backup file. Please use Steam's verify local files function to restore your game");
                 enableButtons();
             }
         }
 
-        private void DoInstall(string path)
+        private void DoInstall()
         {
             try
             {
-                ContinueInstall(path);
+                Debug.WriteLine("Installing");
+                ContinueInstall();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message
                     + Environment.NewLine
-                    + ex.StackTrace
+                    + ex.InnerException);
+                Debug.WriteLine("Error: " + ex.Message
                     + Environment.NewLine
                     + ex.InnerException);
             }
         }
 
-        private void ContinueInstall(string path)
+        private void ContinueInstall()
         {
-            AddModDll(path); //Add the dll to the game data folder
-            GetIPA(path); //Get the modded IPA
+            AddModDll(); //Add the dll to the game data folder
+            GetIPA(); //Get the modded IPA
             string quote = "\"";
             Process.Start(Path.Combine(path, "IPA.exe"), quote + Path.Combine(path, "WeNeedToGoDeeper.exe") + quote + " --nowait");
+            Debug.WriteLine("Launched IPA");
             MessageBox.Show("Install complete, to install mods, download them (They should be a dll) and put them in the plugins folder at: " + Path.Combine(path, "Plugins"));
             File.Delete("ipa.zip");
+            Debug.WriteLine("ipa.zip removed");
             enableButtons();
+            Debug.WriteLine("Done install");
         }
 
-        private void GetIPA(string path)
+        private void GetIPA()
         {
-            using (var client = new WebClient())
-            {
-                client.DownloadFile("https://github.com/NateKomodo/Modded-IPA/releases/download/v1/ipa.zip", "ipa.zip");
-            }
             if (!File.Exists(Path.Combine(path, "IPA.exe")))
             {
+                Debug.WriteLine("IPA not found, installing");
+                using (var client = new WebClient())
+                {
+                    Debug.WriteLine("Downloading IPA");
+                    client.DownloadFile("https://github.com/NateKomodo/Modded-IPA/releases/download/v1/ipa.zip", "ipa.zip");
+                    Debug.WriteLine("Downloaded");
+                }
                 ZipFile.ExtractToDirectory("ipa.zip", path);
+                Debug.WriteLine("IPA extracted");
+            }
+            else
+            {
+                Debug.WriteLine("IPA is already present");
             }
         }
-        private void AddModDll(string path)
+        private void AddModDll()
         {
             //Copies the ModEngine dll to the game data folder
+            Debug.WriteLine("Adding the mod engine DLL to managed folder");
             if (File.Exists(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"))) File.Delete(Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"));
             File.Copy("ModEngine.dll", Path.Combine(path, @"WeNeedToGoDeeper_Data\Managed\ModEngine.dll"));
+            Debug.WriteLine("Done adding mod engine to managed folder");
         }
-        private void OpenModManager(string path)
+        private void OpenModManager()
         {
+            Debug.WriteLine("Opening mod manager");
             enableButtons();
             ModManager manager = new ModManager(path);
             manager.Show();

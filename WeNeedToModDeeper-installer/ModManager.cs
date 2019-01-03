@@ -13,26 +13,42 @@ namespace WeNeedToModDeeper_installer
         Dictionary<string, string> namedownload = new Dictionary<string, string>();
         Dictionary<string, string> nameprefix = new Dictionary<string, string>();
         Dictionary<string, string> nameauthor = new Dictionary<string, string>();
+        Dictionary<string, string[]> nameassets = new Dictionary<string, string[]>();
         private Button button3;
         string pluginspath;
+        string assetspath;
 
         public ModManager(string path)
         {
             try
             {
+                Debug.WriteLine("Creating plugins and asset path");
                 pluginspath = Path.Combine(path, "Plugins");
+                assetspath = Path.Combine(path, "ModAssets");
+                Debug.WriteLine("Plugins path: " + pluginspath);
+                Debug.WriteLine("Asset path: " + assetspath);
+                if (!Directory.Exists(assetspath))
+                {
+                    Debug.WriteLine("Asset folder does not exist, creating");
+                    Directory.CreateDirectory(assetspath);
+                }
+                Debug.WriteLine("Init form and getting indexs");
                 InitializeComponent();
                 GetList();
+                GetAssets();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("MM Error: " + ex.Message
+                MessageBox.Show("Error: " + ex.Message
                     + Environment.NewLine
-                    + ex.StackTrace
+                    + ex.InnerException);
+                Debug.WriteLine("Error: " + ex.Message
                     + Environment.NewLine
                     + ex.InnerException);
             }
         }
+
+
         private ListBox listBox1;
         private Button button1;
         private Button button2;
@@ -120,25 +136,45 @@ namespace WeNeedToModDeeper_installer
             if (!Directory.Exists(pluginspath))
             {
                 MessageBox.Show("Please install the mod engine first");
+                Debug.WriteLine("Attempted install but mod engine is not installed");
                 return;
             }
             if (listBox1.SelectedItem == null)
             {
                 MessageBox.Show("Please select an item");
+                Debug.WriteLine("Attempted install but selected item was null");
                 return;
             }
             string selected = listBox1.SelectedItem.ToString();
             try
             {
+                Debug.WriteLine("Go for install on: " + selected);
                 using (WebClient webClient = new WebClient())
                 {
+                    Debug.WriteLine("Downloading plugin at: " + namedownload[selected]);
+                    Debug.WriteLine("Downloading plugin to: " + Path.Combine(pluginspath, selected + ".dll"));
                     webClient.DownloadFile(namedownload[selected], Path.Combine(pluginspath, selected + ".dll"));
+                    if (nameassets.TryGetValue(selected, out string[] dependencies))
+                    {
+                        foreach (var asset in dependencies)
+                        {
+                            int index = asset.LastIndexOf('/') + 1;
+                            if (index != -1)
+                            {
+                                Debug.WriteLine("Downloading asset at: " + asset);
+                                Debug.WriteLine("Downloading extra asset to: " + Path.Combine(assetspath, asset.Substring(index)));
+                                webClient.DownloadFile(asset, Path.Combine(assetspath, asset.Substring(index)));
+                            }
+                        }
+                    }
                 }
                 MessageBox.Show("Plugin " + selected + " installed.");
+                Debug.WriteLine("Installed " + selected);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
+                Debug.WriteLine("Error: " + ex.Message + Environment.NewLine + ex.InnerException);
             }
         }
 
@@ -147,10 +183,18 @@ namespace WeNeedToModDeeper_installer
             if (listBox1.SelectedItem == null)
             {
                 MessageBox.Show("Please select an item");
+                Debug.WriteLine("Attempted to view without a selected item!");
                 return;
             }
             string selected = listBox1.SelectedItem.ToString();
             MessageBox.Show(selected + ": "
+                + Environment.NewLine
+                + "Description: " + namedesc[selected]
+                + Environment.NewLine
+                + "Author: " + nameauthor[selected]
+                + Environment.NewLine
+                + "Command Prefix: " + nameprefix[selected]);
+           Debug.WriteLine("View displaying: " + selected + ": "
                 + Environment.NewLine
                 + "Description: " + namedesc[selected]
                 + Environment.NewLine
@@ -163,11 +207,12 @@ namespace WeNeedToModDeeper_installer
         {
             try
             {
+                Debug.WriteLine("Aquiring plugin index");
                 WebClient client = new WebClient();
                 Stream stream = client.OpenRead("https://raw.githubusercontent.com/NateKomodo/WeNeedToModDeeper-Plugins/master/index.txt");
                 StreamReader reader = new StreamReader(stream);
                 string content = reader.ReadToEnd();
-                string[] lines = content.Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                string[] lines = content.Split('\n');
                 foreach (var line in lines)
                 {
                     if (line == " " || line == "" || line == null) continue;
@@ -178,7 +223,51 @@ namespace WeNeedToModDeeper_installer
                     namedownload.Add(entry[0], entry[2]);
                     nameprefix.Add(entry[0], entry[3]);
                     nameauthor.Add(entry[0], entry[4]);
+                    Debug.WriteLine("Name: " + entry[0]
+                        + Environment.NewLine
+                        + "Desc: " + entry[1]
+                        + Environment.NewLine
+                        + "Download link: " + entry[2]
+                        + Environment.NewLine
+                        + "Prefix: " + entry[3]
+                        + Environment.NewLine
+                        + "Author: " + entry[4]);
                 }
+                Debug.WriteLine("Plugin index loaded");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message
+                    + Environment.NewLine
+                    + ex.StackTrace
+                    + Environment.NewLine
+                    + ex.Data);
+                Debug.WriteLine("Error: " + ex.Message + Environment.NewLine + ex.InnerException);
+            }
+        }
+
+        private void GetAssets()
+        {
+            try
+            {
+                Debug.WriteLine("Aquiring aditional asset index");
+                WebClient client = new WebClient();
+                Stream stream = client.OpenRead("https://raw.githubusercontent.com/NateKomodo/WeNeedToModDeeper-Plugins/master/assets.txt");
+                StreamReader reader = new StreamReader(stream);
+                string content = reader.ReadToEnd();
+                string[] lines = content.Split('\n');
+                foreach (var line in lines)
+                {
+                    if (line == " " || line == "" || line == null) continue;
+                    string[] entry = line.Split(';');
+                    if (entry[0].StartsWith("#")) continue;
+                    string name = entry[0];
+                    string[] assets = entry[1].Split(',');
+                    nameassets.Add(name, assets);
+                    Debug.WriteLine("Aditional assets for plugin " + name + ":");
+                    foreach (var asset in assets) Debug.WriteLine(asset);
+                }
+                Debug.WriteLine("Aditional asset index loaded");
             }
             catch (Exception ex)
             {
@@ -195,18 +284,23 @@ namespace WeNeedToModDeeper_installer
             if (listBox1.SelectedItem == null)
             {
                 MessageBox.Show("Please select an item");
+                Debug.WriteLine("Uninstall called with no selection made");
                 return;
             }
             string selected = listBox1.SelectedItem.ToString();
             string pathtoplugin = Path.Combine(pluginspath, selected + ".dll");
+            Debug.WriteLine("Go for uninstall on plugin: " + selected);
             if (File.Exists(pathtoplugin))
             {
+                Debug.WriteLine("Removing: " + pathtoplugin);
                 File.Delete(pathtoplugin);
                 MessageBox.Show("Plugin uninstalled");
+                Debug.WriteLine("Plugin removed");
             }
             else
             {
                 MessageBox.Show("Plugin is not installed");
+                Debug.WriteLine("Uninstall called but plugin not installed");
             }
         }
     }
